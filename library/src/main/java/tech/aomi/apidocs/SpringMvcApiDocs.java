@@ -82,6 +82,9 @@ public class SpringMvcApiDocs implements ApiDocs {
 
     private void createApi(Document document, List<String> basePaths, ClassDoc classDoc, MethodDoc methodDoc) {
         List<String> methods = findMethod(methodDoc.annotations());
+        if (methods.size() == 0) {
+            return;
+        }
         Api api = initApi(document, methodDoc);
         api.setMethods(methods);
 
@@ -335,7 +338,7 @@ public class SpringMvcApiDocs implements ApiDocs {
                     api.getResponseBody().add(new ApiField("totalPages", "number", "M", "Total Pages", "0"));
                     api.getResponseBody().add(new ApiField("content[]", "array", "M", "Content", ""));
                 } else if ("@link".equals(tmpTag.name())) {
-                    getClassFields(api.getBody(), ((SeeTag) tmpTag).referencedClass());
+                    getClassFields(api.getResponseBody(), ((SeeTag) tmpTag).referencedClass());
                 }
             }
 

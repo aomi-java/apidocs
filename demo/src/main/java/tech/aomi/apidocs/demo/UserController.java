@@ -1,13 +1,3 @@
-# Java Api Docs
-
-本项目宗旨： 无代码侵入,使用原生javadoc注释生成API接口文档。
-
-[立即为您的项目生成API文档](https://)
-
-### 文档生成效果
-
-代码如下: 
-```java
 package tech.aomi.apidocs.demo;
 
 import org.springframework.data.domain.Page;
@@ -65,17 +55,3 @@ public class UserController {
         return null;
     }
 }
-```
-效果图:
-
-* 菜单导航
-![菜单导航](docs/导航.png "菜单")
-  
-* 查询接口
-![查询接口](docs/效果图1.png "查询接口")
-  
-* 路径带参数接口
-![路径带参数接口](docs/效果图2.png "路径带参数接口")
-  
-* 参数为请求体
-![参数为请求体](docs/效果图3.png "参数为请求体")
