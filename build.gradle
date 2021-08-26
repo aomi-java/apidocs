@@ -1,0 +1,28 @@
+plugins {
+    id "io.franzbecker.gradle-lombok" version "2.2"
+}
+
+group 'tech.aomi.apidocs'
+version '1.0.0'
+
+apply from: 'https://onegit.com/enterprise/public/raw/master/libraries.gradle'
+
+apply from: 'https://onegit.com/enterprise/public/raw/master/java.gradle'
+apply from: 'https://onegit.com/enterprise/public/raw/master/idea.gradle'
+
+repositories {
+    mavenCentral()
+}
+
+
+dependencies {
+    implementation lib.commons_lang3
+    implementation lib.commons_io
+    implementation files("${System.properties['java.home']}/../lib/tools.jar")
+
+    testImplementation lib._test
+
+//    testImplementation fileTree(dir: '/Library/Java/JavaVirtualMachines/jdk1.8.0_251.jdk/Contents/Home/lib', includes: ['tools.jar'])
+
+
+}
