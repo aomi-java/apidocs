@@ -3,6 +3,7 @@ package tech.aomi.apidocs;
 import lombok.Getter;
 import tech.aomi.apidocs.plugins.BuilderPlugin;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,7 +33,7 @@ public class DocsOptions {
 
         private String docsPath = "apidocs";
 
-        private List<BuilderPlugin> builderPlugins;
+        private List<BuilderPlugin> builderPlugins = new ArrayList<>();
 
         public DocsOptions build() {
             return new DocsOptions(this);
