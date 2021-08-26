@@ -2,7 +2,30 @@
 
 本项目宗旨： 无代码侵入,使用原生javadoc注释生成API接口文档。
 
-[立即为您的项目生成API文档](https://)
+[立即为您的项目生成API文档](https://aomi-java.github.io/apidocs)
+
+```java
+import org.junit.Test;
+import tech.aomi.apidocs.DocsOptions;
+import tech.aomi.apidocs.SpringMvcApiDocs;
+import tech.aomi.apidocs.plugins.DocsifyBuilderPlugin;
+import tech.aomi.apidocs.plugins.MarkdownBuilderPlugin;
+
+public class DocsTest {
+
+    @Test
+    public void generate() {
+        new SpringMvcApiDocs(new DocsOptions.Builder()
+                .srcPath("src/main/java") // 源代码路径
+                .docsPath("apidocs") // 生成的文档目录
+                .builderPlugin(new MarkdownBuilderPlugin()) // 生成 Markdown 文件
+                .builderPlugin(new DocsifyBuilderPlugin()) // 生成Docsify 文档网站
+                .build()
+        ).generate();
+
+    }
+}
+```
 
 ### 文档生成效果
 

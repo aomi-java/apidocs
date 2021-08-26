@@ -38,6 +38,7 @@ public class Controller {
 根据方法注释生成响应结果说明.
 
 1. 第一种写法
+
 ```java
 /**
  * 我的标题
@@ -59,8 +60,11 @@ public class Controller {
 
 } 
 ```
+
 2. 第二种写法
+
 支持Spring Page 分页结果展示. 当`@return`中的第一个`link`标签是`{@link org.springframework.data.domain.Page}`时，自动生成分页相关对象信息
+
 ```java
 /**
  * 用户服务
@@ -88,6 +92,7 @@ public class UserController {
 
 } 
 ```
+
 #### 接口列表
 
 接口列表根据`class`中的方法生成.
