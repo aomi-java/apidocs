@@ -19,9 +19,9 @@ public class Api {
 
     private String describe;
 
-    private String method;
+    private List<String> methods;
 
-    private String url;
+    private List<String> urls;
 
     private List<ApiField> headers = new ArrayList<>();
 

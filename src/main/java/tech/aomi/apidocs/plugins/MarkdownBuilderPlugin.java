@@ -45,7 +45,7 @@ public class MarkdownBuilderPlugin implements BuilderPlugin {
 
             lines.add("\n#### Request Method&Request Url");
             lines.add("```");
-            lines.add(api.getMethod() + " " + api.getUrl());
+            lines.add(String.join(";", api.getMethods()) + " " + String.join(";", api.getUrls()));
             lines.add("```");
 
             if (null != api.getPath() && api.getPath().size() > 0) {

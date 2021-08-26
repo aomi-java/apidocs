@@ -8,10 +8,7 @@ import tech.aomi.apidocs.entity.ApiField;
 import tech.aomi.apidocs.entity.Document;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -67,14 +64,14 @@ public class SpringMvcApiDocs implements ApiDocs {
 
         getAllController().forEach(classDoc -> {
             Document document = initDocument(classDoc);
-            String basePath = findRequestMappingPath(classDoc.annotations());
+            List<String> basePaths = findRequestMappingPath(classDoc.annotations());
 
             MethodDoc[] methodDocs = classDoc.methods();
             if (null == methodDocs || methodDocs.length == 0) {
                 return;
             }
             for (MethodDoc methodDoc : methodDocs) {
-                createApi(document, basePath, classDoc, methodDoc);
+                createApi(document, basePaths, classDoc, methodDoc);
             }
 
             documents.add(document);
@@ -83,17 +80,18 @@ public class SpringMvcApiDocs implements ApiDocs {
         options.getBuilderPlugins().forEach(builderPlugin -> builderPlugin.execute(options, documents));
     }
 
-    private void createApi(Document document, String basePath, ClassDoc classDoc, MethodDoc methodDoc) {
-        String method = findMethod(methodDoc.annotations());
-        if (null == method) {
+    private void createApi(Document document, List<String> basePaths, ClassDoc classDoc, MethodDoc methodDoc) {
+        List<String> methods = findMethod(methodDoc.annotations());
+        if (null == methods) {
             return;
         }
         Api api = initApi(document, methodDoc);
-        api.setMethod(method);
+        api.setMethods(methods);
 
-        String path = findRequestMappingPath(methodDoc.annotations());
-        api.setUrl(basePath + path);
-
+        List<String> fullPaths = new ArrayList<>();
+        List<String> paths = findRequestMappingPath(methodDoc.annotations());
+        basePaths.forEach(basePath -> paths.forEach(path -> fullPaths.add(basePath + path)));
+        api.setUrls(fullPaths);
 
         com.sun.javadoc.Parameter[] parameters = methodDoc.parameters();
         for (com.sun.javadoc.Parameter parameter : parameters) {
@@ -355,44 +353,71 @@ public class SpringMvcApiDocs implements ApiDocs {
     }
 
 
-    private String findRequestMappingPath(AnnotationDesc[] annotationDescs) {
+    private List<String> findRequestMappingPath(AnnotationDesc[] annotationDescs) {
         AnnotationDesc annotationDesc = Arrays.stream(annotationDescs).filter(desc -> METHOD_ANNOTATIONS.contains(desc.annotationType().name())).findFirst().orElse(null);
         if (null == annotationDesc) {
-            return "";
+            return Collections.singletonList("");
         }
         AnnotationDesc.ElementValuePair[] elementValues = annotationDesc.elementValues();
         if (null == elementValues || elementValues.length == 0) {
-            return "";
+            return Collections.singletonList("");
         }
-        AnnotationDesc.ElementValuePair pair = elementValues[0];
-
-        AnnotationValue[] values = (AnnotationValue[]) pair.value().value();
-        if (null == values || values.length == 0) {
-            return "";
+        List<String> paths = new ArrayList<>();
+        for (AnnotationDesc.ElementValuePair pair : elementValues) {
+            if (Arrays.asList("path", "value").contains(pair.element().name())) {
+                AnnotationValue[] values = (AnnotationValue[]) pair.value().value();
+                for (AnnotationValue value : values) {
+                    paths.add(StringUtils.trimToEmpty((String) value.value()));
+                }
+            }
         }
-        AnnotationValue value = values[0];
-
-        return StringUtils.trimToEmpty((String) value.value());
+        return paths;
     }
 
-    private String findMethod(AnnotationDesc[] annotationDescs) {
-        AnnotationDesc annotationDesc = Arrays.stream(annotationDescs).filter(desc -> METHOD_ANNOTATIONS.contains(desc.annotationType().name())).findFirst().orElse(null);
-        if (null == annotationDesc) {
-            return null;
-        }
+    private List<String> findMethod(AnnotationDesc[] annotationDescs) {
+        List<String> methods = new ArrayList<>();
+        Arrays.stream(annotationDescs)
+                .filter(desc -> METHOD_ANNOTATIONS.contains(desc.annotationType().name())).forEach(desc -> {
+            String name = desc.annotationType().name();
+            switch (name) {
+                case "PostMapping":
+                    methods.add("POST");
+                    break;
+                case "PutMapping":
+                    methods.add("PUT");
+                    break;
+                case "DeleteMapping":
+                    methods.add("DELETE");
+                    break;
+                case "PatchMapping":
+                    methods.add("PATCH");
+                case "RequestMapping": {
 
-        String name = annotationDesc.annotationType().name();
-        switch (name) {
-            case "PostMapping":
-                return "POST";
-            case "PutMapping":
-                return "PUT";
-            case "DeleteMapping":
-                return "DELETE";
-            case "PatchMapping":
-                return "PATCH";
-            default:
-                return "GET";
-        }
+                    List<AnnotationValue[]> values = Arrays.stream(desc.elementValues())
+                            .filter(elementValuePair -> "method".equals(elementValuePair.element().name()))
+                            .map(pair -> (AnnotationValue[]) pair.value().value())
+                            .collect(Collectors.toList());
+                    if (values.size() == 0) {
+                        methods.add("GET");
+                        break;
+                    }
+                    for (AnnotationValue[] value : values) {
+                        for (AnnotationValue annotationValue : value) {
+                            Object v = annotationValue.value();
+                            if (v instanceof FieldDoc) {
+                                String tmp = ((FieldDoc) (v)).name();
+                                methods.add(tmp);
+                            } else {
+                                methods.add((String) v);
+                            }
+                        }
+                    }
+                    break;
+                }
+                default:
+                    methods.add("GET");
+            }
+        });
+        return methods;
     }
 }
