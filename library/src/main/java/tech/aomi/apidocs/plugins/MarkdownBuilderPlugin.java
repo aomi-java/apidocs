@@ -76,7 +76,7 @@ public class MarkdownBuilderPlugin implements BuilderPlugin {
             }
             if (null != api.getResponseBody() && api.getResponseBody().size() > 0) {
                 lines.add("\n#### Response Body");
-                handleField(lines, Column.HEADER_COLUMNS, api.getBody());
+                handleField(lines, Column.HEADER_COLUMNS, api.getResponseBody());
             }
 
             lines.add("\n");

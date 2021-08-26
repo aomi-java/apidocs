@@ -1,2 +1,6 @@
-rootProject.name = 'apidocs'
+rootProject.name = 'apidocs-root'
 
+
+include ':demo'
+include ':library'
+project(':library').name = 'apidocs'

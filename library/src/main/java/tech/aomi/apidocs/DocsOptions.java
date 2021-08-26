@@ -15,21 +15,21 @@ public class DocsOptions {
     /**
      * 项目路径
      */
-    private final String srcPath;
+    private final List<String> srcPaths;
 
     private final String docsPath;
 
     private final List<BuilderPlugin> builderPlugins;
 
     private DocsOptions(Builder builder) {
-        this.srcPath = builder.srcPath;
+        this.srcPaths = builder.srcPaths;
         this.docsPath = builder.docsPath;
         this.builderPlugins = builder.builderPlugins;
     }
 
     public static class Builder {
 
-        private String srcPath = "src/main/java";
+        private List<String> srcPaths = new ArrayList<>();
 
         private String docsPath = "apidocs";
 
@@ -43,7 +43,15 @@ public class DocsOptions {
             if (null == srcPath) {
                 throw new IllegalArgumentException("srcPath not be null.");
             }
-            this.srcPath = srcPath;
+            this.srcPaths.add(srcPath);
+            return this;
+        }
+
+        public Builder srcPaths(List<String> srcPaths) {
+            if (null == srcPaths) {
+                throw new IllegalArgumentException("srcPaths not be null");
+            }
+            this.srcPaths = srcPaths;
             return this;
         }
 

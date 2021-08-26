@@ -1,8 +1,6 @@
 package tech.aomi.apidocs.entity;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 /**
  * @author Sean createAt 2021/8/24
@@ -10,6 +8,8 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class ApiField {
 
     private String name = "";

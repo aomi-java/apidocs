@@ -1,12 +1,47 @@
 # Java Api Docs
 
-自动根据`Spring MVC`生成`Markdown`格式的API文档. 同时生成`docsify`网站
+本项目宗旨：使用javadoc注释生成API接口文档。
 
-例如:
+## 注释编写规则
+
+#### 文档标题
+
+根据`class`注释生成；`class`注释的第一行为标题. 例如:
 
 ```java
 
+/**
+ * 我的标题
+ */
+public class Controller {
+
+}
 ```
+
+#### 文档概括
+
+根据`class`注释生成；`class` 注释的第二行起为文档概括.例如:
+
+```java
+/**
+ * 我的标题
+ * 我是概括我是概括我是概括我是概括我是概括我是概括
+ * 我是概括我是概括我是概括我是概括我是概括我是概括
+ */
+public class Controller {
+
+}
+```
+
+#### 接口列表
+
+接口列表根据`class`中的方法生成.
+
+
+
+## Spring Web MVC Api 文档生成
+
+自动根据`Spring Web`项目生成API接口文档
 
 ### 如何使用
 

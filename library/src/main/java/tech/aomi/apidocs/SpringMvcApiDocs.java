@@ -82,9 +82,6 @@ public class SpringMvcApiDocs implements ApiDocs {
 
     private void createApi(Document document, List<String> basePaths, ClassDoc classDoc, MethodDoc methodDoc) {
         List<String> methods = findMethod(methodDoc.annotations());
-        if (null == methods) {
-            return;
-        }
         Api api = initApi(document, methodDoc);
         api.setMethods(methods);
 
@@ -161,25 +158,27 @@ public class SpringMvcApiDocs implements ApiDocs {
             return;
         }
 
-        FieldDoc[] fieldDocs = parameter.type().asClassDoc().fields(false);
-        Arrays.stream(fieldDocs).forEach(fieldDoc -> {
-            if (fieldDoc.isTransient() || fieldDoc.isVolatile() || fieldDoc.isStatic()) {
-                return;
-            }
-            ApiField apiField = new ApiField();
-            apiField.setName(fieldDoc.name());
-            apiField.setType(getType(fieldDoc.type().typeName()));
-            apiField.setDescribe(fieldDoc.commentText());
-
-            AnnotationDesc[] annotationDescs = fieldDoc.annotations();
-            boolean required = Arrays.stream(annotationDescs).anyMatch(item -> FIELD_REQUIRED_ANNOTATIONS.contains(item.annotationType().name()));
-            if (required) {
-                apiField.setRequired("M");
-            }
-
-
-            api.getBody().add(apiField);
-        });
+        getClassFields(api.getBody(), parameter.type().asClassDoc());
+//
+//        FieldDoc[] fieldDocs = parameter.type().asClassDoc().fields(false);
+//        Arrays.stream(fieldDocs).forEach(fieldDoc -> {
+//            if (fieldDoc.isTransient() || fieldDoc.isVolatile() || fieldDoc.isStatic()) {
+//                return;
+//            }
+//            ApiField apiField = new ApiField();
+//            apiField.setName(fieldDoc.name());
+//            apiField.setType(getType(fieldDoc.type().typeName()));
+//            apiField.setDescribe(fieldDoc.commentText());
+//
+//            AnnotationDesc[] annotationDescs = fieldDoc.annotations();
+//            boolean required = Arrays.stream(annotationDescs).anyMatch(item -> FIELD_REQUIRED_ANNOTATIONS.contains(item.annotationType().name()));
+//            if (required) {
+//                apiField.setRequired("M");
+//            }
+//
+//
+//            api.getBody().add(apiField);
+//        });
 
     }
 
@@ -271,8 +270,10 @@ public class SpringMvcApiDocs implements ApiDocs {
 
     private List<String> getAllFile() {
         List<String> files = new ArrayList<>();
-        File root = new File(options.getSrcPath());
-        findFile(files, root);
+        options.getSrcPaths().forEach(path -> {
+            File root = new File(path);
+            findFile(files, root);
+        });
         return files;
     }
 
@@ -312,14 +313,40 @@ public class SpringMvcApiDocs implements ApiDocs {
 
         Tag[] tags = methodDoc.tags();
         Arrays.stream(tags).filter(tag -> tag.name().equals("@return")).findFirst().ifPresent((tag) -> {
-            String text = tag.text();
-//                Matcher matcher = LINK_PATTERN.matcher(text);
-//                if(matcher.find()){
-//                    String s = matcher.group();
-//                    System.out.println(s);
-//                }
+            Tag[] inlineTags = tag.inlineTags();
+            if (inlineTags.length == 0) {
+                return;
+            }
+            api.setResponseDescribe(inlineTags[0].text());
+            boolean hasPage = false;
+            String fieldNamePrefix = "";
+            if (inlineTags.length > 1) {
+                Tag tmpTag = inlineTags[1];
+                // 返回结果为分页查询
+                if ("@link".equals(tmpTag.name()) && "org.springframework.data.domain.Page".equals(tmpTag.text())) {
+                    hasPage = true;
+                    fieldNamePrefix = "content[].";
+                    api.getResponseBody().add(new ApiField("first", "boolean", "M", "First Page", "true"));
+                    api.getResponseBody().add(new ApiField("last", "boolean", "M", "Last Page", "true"));
+                    api.getResponseBody().add(new ApiField("number", "number", "M", "Number", "0"));
+                    api.getResponseBody().add(new ApiField("numberOfElements", "number", "M", "Number Of Elements", "0"));
+                    api.getResponseBody().add(new ApiField("size", "number", "M", "Size", ""));
+                    api.getResponseBody().add(new ApiField("totalElements", "number", "M", "Total Elements", "0"));
+                    api.getResponseBody().add(new ApiField("totalPages", "number", "M", "Total Pages", "0"));
+                    api.getResponseBody().add(new ApiField("content[]", "array", "M", "Content", ""));
+                } else if ("@link".equals(tmpTag.name())) {
+                    getClassFields(api.getBody(), ((SeeTag) tmpTag).referencedClass());
+                }
+            }
 
-            api.setResponseDescribe(text);
+            if (inlineTags.length > 2) {
+                for (int i = 2; i < inlineTags.length; i++) {
+                    Tag tmpTag = inlineTags[i];
+                    if ("@link".equals(tmpTag.name())) {
+                        getClassFields(api.getResponseBody(), fieldNamePrefix, ((SeeTag) tmpTag).referencedClass());
+                    }
+                }
+            }
         });
 
         return api;
@@ -334,7 +361,6 @@ public class SpringMvcApiDocs implements ApiDocs {
     private Document initDocument(ClassDoc classDoc) {
         Document document = new Document();
         if (null == classDoc) {
-//                LOGGER.error("读取注释失败 classDoc null");
             return document;
         }
         document.setFilename(classDoc.name());
@@ -370,6 +396,9 @@ public class SpringMvcApiDocs implements ApiDocs {
                     paths.add(StringUtils.trimToEmpty((String) value.value()));
                 }
             }
+        }
+        if (paths.size() == 0) {
+            paths.add("");
         }
         return paths;
     }
@@ -419,5 +448,30 @@ public class SpringMvcApiDocs implements ApiDocs {
             }
         });
         return methods;
+    }
+
+    private void getClassFields(List<ApiField> apiFields, ClassDoc classDoc) {
+        getClassFields(apiFields, null, classDoc);
+    }
+
+    private void getClassFields(List<ApiField> apiFields, String filedNamePrefix, ClassDoc classDoc) {
+        FieldDoc[] fieldDocs = classDoc.fields(false);
+        Arrays.stream(fieldDocs).forEach(fieldDoc -> {
+            if (fieldDoc.isTransient() || fieldDoc.isVolatile() || fieldDoc.isStatic()) {
+                return;
+            }
+            ApiField apiField = new ApiField();
+            apiField.setName(StringUtils.trimToEmpty(filedNamePrefix) + fieldDoc.name());
+            apiField.setType(getType(fieldDoc.type().typeName()));
+            apiField.setDescribe(fieldDoc.commentText());
+
+            AnnotationDesc[] annotationDescs = fieldDoc.annotations();
+            boolean required = Arrays.stream(annotationDescs).anyMatch(item -> FIELD_REQUIRED_ANNOTATIONS.contains(item.annotationType().name()));
+            if (required) {
+                apiField.setRequired("M");
+            }
+
+            apiFields.add(apiField);
+        });
     }
 }
