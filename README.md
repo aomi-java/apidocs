@@ -1,6 +1,6 @@
 # Java Api Docs
 
-本项目宗旨：使用javadoc注释生成API接口文档。
+本项目宗旨： 无代码侵入,使用原声javadoc注释生成API接口文档。
 
 ## 注释编写规则
 
@@ -36,8 +36,6 @@ public class Controller {
 #### 接口列表
 
 接口列表根据`class`中的方法生成.
-
-
 
 ## Spring Web MVC Api 文档生成
 
